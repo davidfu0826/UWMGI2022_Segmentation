@@ -1,4 +1,7 @@
+import os 
+
 import numpy as np
+import pandas as pd
 
 
 # Helper functions
@@ -26,3 +29,34 @@ def rle_decode(mask_rle, shape, color=1):
         img[start : end] = color
     
     return img.reshape(shape)
+
+def get_pivot_table(dataframe_path):
+    """
+    Obtain DataFrame needed by get_mask function
+    
+    """
+    df = pd.read_csv(dataframe_path)
+    return df.pivot(index="id", columns="class", values="segmentation").reset_index()
+
+def _get_mask_row(img_path, pivot_df):
+    case, case_day, _, filename = img_path.split(os.sep)[-4:]
+    assert filename == os.path.basename(img_path)
+    case_id = "_".join([case_day] + filename.split("_")[:2])
+    return pivot_df[pivot_df["id"] == case_id]
+
+def get_image_size_by_path(img_path):
+    filename = os.path.basename(img_path)
+    h, w = filename.split("_")[2:4]
+    return int(h), int(w)
+
+def get_mask(img_path, pivot_df, labels=["large_bowel", "small_bowel", "stomach"]):
+    pivot_row = _get_mask_row(img_path, pivot_df)
+    img_h, img_w = get_image_size_by_path(img_path)
+
+    masks = list()
+    for label in labels:
+        if not pivot_row[label].isna().item():
+            masks.append(rle_decode(pivot_row[label].item(), shape=(img_h, img_w)))
+        else:
+            masks.append(np.zeros((img_h, img_w)))
+    return np.stack(masks, axis=-1)
