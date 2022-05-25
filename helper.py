@@ -24,7 +24,7 @@ def rle_decode(mask_rle, shape, color=1):
         img = np.zeros((shape[0] * shape[1], shape[2]), dtype=np.float32)
     else:
         img = np.zeros(shape[0] * shape[1], dtype=np.float32)
-        
+         
     for start, end in zip(starts, ends):
         img[start : end] = color
     
