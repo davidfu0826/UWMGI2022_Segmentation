@@ -56,7 +56,7 @@ def get_mask(img_path, pivot_df, labels=["large_bowel", "small_bowel", "stomach"
     masks = list()
     for label in labels:
         if not pivot_row[label].isna().item():
-            masks.append(rle_decode(pivot_row[label].item(), shape=(img_h, img_w)))
+            masks.append(rle_decode(pivot_row[label].item(), shape=(img_w, img_h)))
         else:
-            masks.append(np.zeros((img_h, img_w)))
+            masks.append(np.zeros((img_w, img_h)))
     return np.stack(masks, axis=-1)
