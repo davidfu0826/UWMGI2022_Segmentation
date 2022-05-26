@@ -86,6 +86,7 @@ def id2filename(case_id, list_of_img_paths):
     """
     Input:
     -   Given an id input e.g. "case123_day20_slice_0065"
+    -   List of path to images with the structure <case>/<case_day>/<scans>
     Output:
     -   Path to the image corresponding to the id e.g. train/case123/case123_day20/scans/slice_0065_266_266_1.50_1.50.png'
     """
