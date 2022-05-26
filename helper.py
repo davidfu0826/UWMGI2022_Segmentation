@@ -5,6 +5,27 @@ import pandas as pd
 
 
 # Helper functions
+def rle_encode(img):
+    """ TBD
+    
+    Args:
+        img (np.array): 
+            - 1 indicating mask
+            - 0 indicating background
+    
+    Returns: 
+        run length as string formated
+
+    ref.: https://www.kaggle.com/stainsby/fast-tested-rle
+    Source: https://www.kaggle.com/code/yiheng/3d-solution-with-monai-infer
+    """
+    
+    pixels = img.flatten()
+    pixels = np.concatenate([[0], pixels, [0]])
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+    runs[1::2] -= runs[::2]
+    return ' '.join(str(x) for x in runs)
+
 def rle_decode(mask_rle, shape, color=1):
     '''
     mask_rle: run-length as string formated (start length)
@@ -60,3 +81,16 @@ def get_mask(img_path, pivot_df, labels=["large_bowel", "small_bowel", "stomach"
         else:
             masks.append(np.zeros((img_w, img_h)))
     return np.stack(masks, axis=-1)
+
+def id2filename(case_id, list_of_img_paths):
+    """
+    Input:
+    -   Given an id input e.g. "case123_day20_slice_0065"
+    Output:
+    -   Path to the image corresponding to the id e.g. train/case123/case123_day20/scans/slice_0065_266_266_1.50_1.50.png'
+    """
+    case_dir, case_day, _, slice_number = case_id.split("_")
+    filtered_imgs = [img for img in list_of_img_paths if case_dir + '_' + case_day in img]
+    filtered_imgs = [img for img in filtered_imgs if 'slice_' + slice_number in img]
+    assert len(filtered_imgs) == 1
+    return filtered_imgs[0]
