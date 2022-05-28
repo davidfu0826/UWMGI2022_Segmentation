@@ -1,7 +1,8 @@
-import os 
+import os, glob
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 # Helper functions
@@ -93,5 +94,46 @@ def id2filename(case_id, list_of_img_paths):
     case_dir, case_day, _, slice_number = case_id.split("_")
     filtered_imgs = [img for img in list_of_img_paths if case_dir + '_' + case_day in img]
     filtered_imgs = [img for img in filtered_imgs if 'slice_' + slice_number in img]
-    assert len(filtered_imgs) == 1
+
+    test = len(filtered_imgs) == 1
+    if not test:
+        print("Test: 'len(filtered_imgs) == 1' failed")
+        print(f"len(filtered_imgs): {len(filtered_imgs)}")
+        print(filtered_imgs)
+    assert test
     return filtered_imgs[0]
+
+
+def create_metadata_table(competition_dataset_folder = "../../../Dataset/uw-madison-gi-tract-image-segmentation/"):
+    """Creates a pandas.DataFrame containing all relevant metadata. Each row corresponds to an image in the dataset.
+    
+    Args:
+    string competition_dataset_folder: Path to competition directory 'uw-madison-gi-tract-image-segmentation'.
+    
+    Returns:
+    pandas.DataFrame: Table with metadata
+    """
+    dataframe_path = os.path.join(competition_dataset_folder, "train.csv")
+    pivot_df = get_pivot_table(dataframe_path)
+
+    img_paths = glob.glob( os.path.join(competition_dataset_folder, "train/*/*/scans/*.png"))
+    b = [a.split(os.sep)[1:3] + a.split(os.sep)[-1].replace(".png", "").split("_") + [len(os.listdir(os.sep.join(a.split(os.sep)[:-1])))] for a in tqdm(img_paths)]
+    df_more_data = pd.DataFrame([["_".join(a[1:4])] + a[4:] for a in b], columns=["id", "sliceHeight", "sliceWidth", "pixelSpacingHeight", "pixelSpacingWidth", "num_slices"])
+
+    big_df = pivot_df.merge(df_more_data, on="id")
+    big_df[["sliceHeight", "sliceWidth", "num_slices"]] = big_df[["sliceHeight", "sliceWidth", "num_slices"]].astype(int)
+    big_df[["pixelSpacingHeight", "pixelSpacingWidth"]] = big_df[["pixelSpacingHeight", "pixelSpacingWidth"]].astype(float)
+    big_df["case"] = big_df["id"].str.split("_").apply(lambda x: x[0])
+    big_df["case_day"] = big_df["id"].str.split("_").apply(lambda x: "_".join(x[:2]))
+
+    df_paths = pd.DataFrame(
+    [[
+        "_".join([img_path.split(os.sep)[-3], "_".join(img_path.split(os.sep)[-1].split("_")[:2])]), 
+        img_path, 
+        os.sep.join(img_path.split(os.sep)[:-1]), 
+        os.sep.join(img_path.split(os.sep)[:-3])
+    ] for img_path in img_paths], 
+    columns = ["id", "img_path", "scan_dir_path", "case_path"]
+)
+    big_df = big_df.merge(df_paths, on="id")
+    return big_df
