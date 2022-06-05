@@ -70,4 +70,4 @@ class UWMGI2022SegmentationInferenceDataset(Dataset):
             transformed = self.transform(image=image)
             image = transformed['image']
 
-        return image
+        return image, img_path
