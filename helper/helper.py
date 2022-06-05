@@ -103,6 +103,12 @@ def id2filename(case_id, list_of_img_paths):
     assert test
     return filtered_imgs[0]
 
+def filepath2id(img_path):
+    """Return the ID of the sample given the path to the image.
+    
+    """
+    i = img_path.split(os.sep)
+    return "_".join([i[-3]] + i[-1].split("_")[:2])
 
 def create_metadata_table(competition_dataset_folder = "../../../Dataset/uw-madison-gi-tract-image-segmentation/"):
     """Creates a pandas.DataFrame containing all relevant metadata. Each row corresponds to an image in the dataset.
@@ -117,8 +123,8 @@ def create_metadata_table(competition_dataset_folder = "../../../Dataset/uw-madi
     pivot_df = get_pivot_table(dataframe_path)
 
     img_paths = glob.glob( os.path.join(competition_dataset_folder, "train/*/*/scans/*.png"))
-    b = [[a.split(os.sep)[-4], a.split(os.sep)[-3]] + a.split(os.sep)[-1].replace(".png", "").split("_") + [len(os.listdir(os.sep.join(a.split(os.sep)[:-1])))]  for a in tqdm(img_paths)]
-    df_more_data = pd.DataFrame([["_".join(a[1:4])] + a[4:] for a in b], columns=["id", "sliceHeight", "sliceWidth", "pixelSpacingHeight", "pixelSpacingWidth", "num_slices"])
+    b = [[filepath2id(i)] + os.path.basename(i).replace(".png", "").split("_")[2:] + [len(os.listdir(os.sep.join(i.split(os.sep)[:-1])))] for i in tqdm(img_paths)]
+    df_more_data = pd.DataFrame(b, columns=["id", "sliceHeight", "sliceWidth", "pixelSpacingHeight", "pixelSpacingWidth", "num_slices"])
 
     big_df = pivot_df.merge(df_more_data, on="id")
     big_df[["sliceHeight", "sliceWidth", "num_slices"]] = big_df[["sliceHeight", "sliceWidth", "num_slices"]].astype(int)
