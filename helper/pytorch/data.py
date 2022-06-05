@@ -6,7 +6,6 @@ from ..helper import rle_decode, create_metadata_table
 
 class UWMGI2022SegmentationDataset(Dataset):
     def __init__(self, dataset_path, transform=None):
-        dataset_path = "../../../Dataset/uw-madison-gi-tract-image-segmentation/"
 
         print("Preparing metadata dataframe...")
         self.df = create_metadata_table(dataset_path)
