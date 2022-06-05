@@ -53,7 +53,8 @@ class UWMGI2022SegmentationTrainingDataset(Dataset):
 class UWMGI2022SegmentationInferenceDataset(Dataset):
     def __init__(self, dataset_path, transform=None):
         self.img_paths = glob.glob(os.path.join(dataset_path, "*/*/scans/*.png"))
-        
+        self.transform = transform
+        print(f"Number of images found: {len(self.img_paths)}")
 
     def __len__(self):
         return len(self.img_paths)
