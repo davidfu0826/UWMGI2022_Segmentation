@@ -1,10 +1,12 @@
+import os, glob
+
 import cv2
 import numpy as np
 from torch.utils.data import Dataset
 
 from ..helper import rle_decode, create_metadata_table
 
-class UWMGI2022SegmentationDataset(Dataset):
+class UWMGI2022SegmentationTrainingDataset(Dataset):
     def __init__(self, dataset_path, transform=None):
 
         print("Preparing metadata dataframe...")
@@ -47,3 +49,24 @@ class UWMGI2022SegmentationDataset(Dataset):
 
             np_mask.append(mask)
         return np.stack(np_mask, axis=-1)
+
+class UWMGI2022SegmentationInferenceDataset(Dataset):
+    def __init__(self, dataset_path, transform=None):
+        self.img_paths = glob.glob(os.path.join(dataset_path, "*/*/scans/*.png"))
+        
+
+    def __len__(self):
+        return len(self.img_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.img_paths[idx]
+        image = cv2.imread(img_path, -1)
+        
+        assert image.dtype == np.uint16
+        image = np.divide(image, 2**16) # Normalize [0, 1]
+        
+        if self.transform:
+            transformed = self.transform(image=image)
+            image = transformed['image']
+
+        return image
